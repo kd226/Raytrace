@@ -44,16 +44,19 @@ buildWorld :: State World ()
 buildWorld = do
   let s = execState buildScene emptyScene
   let v = execState buildView sampleView
-  let rd = 10
+  let rd = 5
+
   -- s <- get
-  put (World s v rd 1 1366 768)
+  put (World s v rd 2 2732 1536)
 
 main :: IO ()
 main = do
   let world = execState buildWorld sampleWorld
   {--world `seq` --}
-  let bitmap = runReader renderFrames world
-  savePPM "test.ppm" bitmap
+  -- let bitmap = runReader renderFrames world
+  -- savePPM "test.ppm" bitmap
+
+  runReaderT (renderAll "test") world
 
 -- main :: IO ()
 -- main = do

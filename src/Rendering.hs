@@ -1,11 +1,12 @@
 {-# LANGUAGE BangPatterns #-}
--- {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
-module Rendering (renderFrames,savePPM) where
+module Rendering (renderFrames,savePPM, renderAll) where
 
 import Raytracer
 import SceneBuilder
-import Control.Monad.State.Strict
+-- import Control.Monad.State.Strict
 import Control.Monad.Reader
 import Control.Monad.Random
 import Data.Vect.Double
@@ -17,11 +18,12 @@ import Types
 import Predefined
 import Control.Parallel.Strategies
 import Control.DeepSeq
--- import Control.Monad.Par
+
+import Control.Monad.Par
 
 type RGBA = Vec4
 
-data Bitmap a = Bitmap [a] Int Int
+data Bitmap a = Bitmap [a] Int Int -- deriving (NFData)
 
 instance (NFData a) => NFData (Bitmap a) where
   rnf (Bitmap pix w h) = (rnf pix) `seq` rnf w `seq` rnf h
@@ -73,16 +75,20 @@ renderFrame chunked !size stdg = do
   w <- ask
   let tmp x = runReaderT (renderPart x) w
   let c1 = map (evalRand.tmp) chunked
-  let c2 = zipWith ($) c1 list -- `using` evalList rpar
+  let c2 = zipWith ($) c1 list
   let cf = concat c2
-  return cf
+  return $ runPar $ do
+    cls <- spawnP cf
+    evcolors <- mapM spawnP c2
+    colors <- mapM get evcolors
+    return $ concat colors
 
 renderFrames :: Reader World (Bitmap Color)
 renderFrames = do
   w <- asks width
   h <- asks height
   world <- ask
-  let chunks = 4
+  let chunks = 24
   rays <- createRays w h
   let chunked = chunksOf (w*h `div` chunks) $ rays
   frames <- asks samples
@@ -91,16 +97,19 @@ renderFrames = do
   let calcPixs = chunked `seq` map (renderFrame chunked chunks) generators
   let results = runReader (sequence calcPixs) world -- `using` evalList rpar
   let pixsf = (map (&* (1.0/fromIntegral frames))
-             .foldr (zipWith (&+)) (replicate (w*h) black) $(results {--`using` evalList rdeepseq --}))
+             .foldl' addFrame (replicate (w*h) black) $(results {--`using` evalList rdeepseq --}))
   return $ Bitmap (pixsf) w h
 
---
--- simpleRender :: Int -> Int -> [Ray] -> Int -> Int -> State World [Color]
--- simpleRender w h _ _ 0 = return $ replicate (w*h) black
--- simpleRender w h r dip n = do
---   rightNow <- mapM (raytrace 1.0 dip) r
---   soFar <- simpleRender w h r dip (n-1)
---   return$zipWith (&+) soFar rightNow
+addFrame :: [Color] -> [Color] -> [Color]
+addFrame soFar add = soFar `deepseq` zipWith (&+) soFar add
+
+renderAll :: String -> ReaderT World IO ()
+renderAll name = do
+  world <- ask
+  let bitmap = runReader renderFrames world
+  bitmap `deepseq` liftIO $ savePPM name bitmap -- force full bitmap evaluation before saving it
+  -- could be propably written as savePPM name $!! bitmap
+
 
 
 toWords :: Bitmap Color -> Bitmap Word8
@@ -112,8 +121,9 @@ toWords b = Bitmap words8 (heightB b) (widthB b)
     mb = maxBound :: Word8
 
 savePPM :: FilePath -> Bitmap Color -> IO ()
-savePPM f bm = writeFile f stringifyPPM
+savePPM f bm = writeFile fpmm stringifyPPM
   where
+    fpmm = f ++ ".ppm"
     stringifyPPM = "P3\n" ++ (show.widthB$bm) ++ " " ++ (show.heightB$bm)
       ++ "\n255\n" ++ makeASCII
     makeASCII = concatMap ((++ " ").show) wordmap

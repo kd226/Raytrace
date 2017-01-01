@@ -27,7 +27,7 @@ library
                      , split
                      , parallel
                      , deepseq
-                     --, monad-par
+                     , monad-par
   default-language:    Haskell2010
 
 executable Raytrace-exe
