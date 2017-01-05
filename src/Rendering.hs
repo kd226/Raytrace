@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Rendering (renderFrames,savePPM, renderAll) where
+module Rendering (renderFrames,savePPM, renderAll,renderAllNotified) where
 
 import Raytracer
 import SceneBuilder
@@ -88,7 +88,7 @@ renderFrames = do
   w <- asks width
   h <- asks height
   world <- ask
-  let chunks = 24
+  let chunks = 32
   rays <- createRays w h
   let chunked = chunksOf (w*h `div` chunks) $ rays
   frames <- asks samples
@@ -102,6 +102,35 @@ renderFrames = do
 
 addFrame :: [Color] -> [Color] -> [Color]
 addFrame soFar add = soFar `deepseq` zipWith (&+) soFar add
+
+renderFramesNotified :: ReaderT World IO (Bitmap Color)
+renderFramesNotified = do
+  w <- asks width
+  h <- asks height
+  world <- ask
+  let chunks = 32
+  let rays = runReader (createRays w h) world
+  let chunked = chunksOf (w*h `div` chunks) $ rays
+  frames <- asks samples
+  let stdg = mkStdGen 0
+  let generators = evalRand (replicateM frames getSplit) stdg
+  let calcPixs = chunked `seq` map (renderFrame chunked chunks) generators
+  let results = runReader (sequence calcPixs) world
+  pixsf <- liftIO $ fmap (map (&* (1.0/fromIntegral frames)).snd).foldM addFrameN (0,replicate (w*h) black) $(results)
+  -- (map (&* (1.0/fromIntegral frames)).
+  return $ Bitmap pixsf w h
+
+addFrameN :: (Int, [Color]) -> [Color] -> IO (Int, [Color])
+addFrameN (!number,soFar) add = do
+  soFar `deepseq` putStrLn $ "Frame number " ++ show (number+1) ++ " stated."
+  return  (number+1,zipWith (&+) soFar add)
+
+renderAllNotified :: String -> ReaderT World IO ()
+renderAllNotified name = do
+  liftIO $ putStrLn "Start"
+  bitmap <- renderFramesNotified
+  bitmap `deepseq` liftIO $ savePPM name bitmap
+  liftIO $ putStrLn "Succes"
 
 renderAll :: String -> ReaderT World IO ()
 renderAll name = do
