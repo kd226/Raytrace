@@ -96,7 +96,12 @@ overallLighting importance depth hit =
       let color = foldr addMix black colors
       return $! clamp color
 
-raytrace :: Double -> Int -> Ray -> ReaderT World (Rand StdGen) Color
+-- | Send a ray and return its color.
+raytrace :: Double -- ^ Importance of ray
+         -- (when importance is sufficently low raytracing stops and returns black).
+         -> Int -- ^ Depth to trace, that is raytracing stops when depth reaches 0.
+         -> Ray -- ^ Ray to send.
+         -> ReaderT World (Rand StdGen) Color -- ^ Color of this ray.
 raytrace _ 0 _ = return black
 raytrace importance depth ray =
   if importance < lightEpsilon

@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Rendering (renderFrames,savePPM, renderAll,renderAllNotified) where
+module Rendering (Bitmap, savePPM, renderAll,renderAllNotified) where
 
 import Raytracer
 import SceneBuilder
@@ -23,8 +23,12 @@ import Control.Monad.Par
 
 type RGBA = Vec4
 
-data Bitmap a = Bitmap [a] Int Int -- deriving (NFData)
+data Bitmap a = Bitmap { pixels::[a] -- ^ List of pixels of type a
+                       , widthB::Int -- ^ Width of bitmap
+                       , heightB::Int -- ^ Height of bitmap
+                       } -- deriving (NFData)
 
+-- Instances of NFData in order to implement parallelism
 instance (NFData a) => NFData (Bitmap a) where
   rnf (Bitmap pix w h) = (rnf pix) `seq` rnf w `seq` rnf h
 
@@ -36,16 +40,6 @@ instance NFData Ray where
 
 instance NFData Normal3 where
   rnf a = rnf (fromNormal a)
-
-pixels :: Bitmap a -> [a]
-pixels (Bitmap a _ _ ) = a
-
-widthB :: Bitmap a -> Int
-widthB (Bitmap _ w _) = w
-
-heightB :: Bitmap a -> Int
-heightB (Bitmap _ _ h) = h
-
 
 createRays :: Int -> Int -> Reader World [Ray]
 createRays w h = do
@@ -69,8 +63,6 @@ renderPart r = do
 
 renderFrame :: [[Ray]] -> Int -> StdGen  -> Reader World [Color]
 renderFrame chunked !size stdg = do
--- chunks = 4
--- chunked = chunksOf (size `div` chunks) rs
   let list = evalRand (replicateM size getSplit) stdg
   w <- ask
   let tmp x = runReaderT (renderPart x) w
@@ -90,7 +82,7 @@ renderFrames = do
   world <- ask
   let chunks = 32
   rays <- createRays w h
-  let chunked = chunksOf (w*h `div` chunks) $ rays
+  let chunked = chunksOf (w*h `div` chunks)  rays
   frames <- asks samples
   let stdg = mkStdGen 0
   let generators = evalRand (replicateM frames getSplit) stdg
@@ -98,11 +90,13 @@ renderFrames = do
   let results = runReader (sequence calcPixs) world -- `using` evalList rpar
   let pixsf = (map (&* (1.0/fromIntegral frames))
              .foldl' addFrame (replicate (w*h) black) $(results {--`using` evalList rdeepseq --}))
-  return $ Bitmap (pixsf) w h
+  return $ Bitmap pixsf w h
 
 addFrame :: [Color] -> [Color] -> [Color]
 addFrame soFar add = soFar `deepseq` zipWith (&+) soFar add
 
+-- | Renders all frames specified by World and writes line to IO each time a
+-- frame is rendered.
 renderFramesNotified :: ReaderT World IO (Bitmap Color)
 renderFramesNotified = do
   w <- asks width
@@ -110,7 +104,7 @@ renderFramesNotified = do
   world <- ask
   let chunks = 32
   let rays = runReader (createRays w h) world
-  let chunked = chunksOf (w*h `div` chunks) $ rays
+  let chunked = chunksOf (w*h `div` chunks)  rays
   frames <- asks samples
   let stdg = mkStdGen 0
   let generators = evalRand (replicateM frames getSplit) stdg
@@ -125,21 +119,24 @@ addFrameN (!number,soFar) add = do
   soFar `deepseq` putStrLn $ "Frame number " ++ show (number+1) ++ " stated."
   return  (number+1,zipWith (&+) soFar add)
 
-renderAllNotified :: String -> ReaderT World IO ()
+-- | Render all frames specified in World and save them to file, notifing each
+-- time a frame is rendered.
+renderAllNotified :: String -- ^ Name of the file to save to
+                  -> ReaderT World IO () -- ^ Returned IO in ReaderT monad
 renderAllNotified name = do
   liftIO $ putStrLn "Start"
   bitmap <- renderFramesNotified
   bitmap `deepseq` liftIO $ savePPM name bitmap
   liftIO $ putStrLn "Succes"
 
-renderAll :: String -> ReaderT World IO ()
+-- | Renders all frames specified in World and save them to file
+renderAll :: String  -- ^ Name of the file to save to
+          -> ReaderT World IO () -- ^ Returned IO in ReaderT monad
 renderAll name = do
   world <- ask
   let bitmap = runReader renderFrames world
   bitmap `deepseq` liftIO $ savePPM name bitmap -- force full bitmap evaluation before saving it
   -- could be propably written as savePPM name $!! bitmap
-
-
 
 toWords :: Bitmap Color -> Bitmap Word8
 toWords b = Bitmap words8 (heightB b) (widthB b)
@@ -149,7 +146,10 @@ toWords b = Bitmap words8 (heightB b) (widthB b)
     calculateD d = truncate (d * fromIntegral mb)
     mb = maxBound :: Word8
 
-savePPM :: FilePath -> Bitmap Color -> IO ()
+-- | Save color bitmap to pmm file.
+savePPM :: FilePath -- ^ Path to file
+        -> Bitmap Color -- ^ Bitmap to save
+        -> IO () -- ^ Returned IO monad
 savePPM f bm = writeFile fpmm stringifyPPM
   where
     fpmm = f ++ ".ppm"
