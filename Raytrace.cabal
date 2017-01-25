@@ -1,13 +1,13 @@
 name:                Raytrace
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Path traycer
 description:         Please see README.md
-homepage:            https://github.com/githubuser/Raytrace#readme
-license:             BSD3
+homepage:            https://github.com/kd226/Raytrace#readme
+license:             GPL-3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2016 Author name here
+author:              Konrad Dobroś
+maintainer:          konrad.dobros@gmail.com
+copyright:           2017 Konrad Dobroś
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -47,9 +47,11 @@ test-suite Raytrace-test
   main-is:             Test.hs
   build-depends:       base
                      , Raytrace
+                     , HUnit
+                     , vect
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/Raytrace
+  location: https://github.com/kd226/Raytrace

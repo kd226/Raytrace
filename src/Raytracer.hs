@@ -1,6 +1,18 @@
+{-|
+Module      : Raytracer
+Description : Core
+Copyright   : (c) Konrad Dobroś, 2017
+License     : GPL-3
+Maintainer  : dobros.konrad@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+This is an entry point to internals of Raytrace.
+-}
+
 {-# LANGUAGE BangPatterns #-}
 
-module Raytracer (raytrace) where
+module Raytracer (raytrace, roots) where
 
 import Data.Vect.Double
 import Control.Monad.State.Strict
@@ -119,8 +131,6 @@ raytrace importance depth ray =
 -- Random double from range (0.0, 1.0)
 evalRoll :: Rand StdGen Double
 evalRoll = getRandomR (0.0,1.0)
-
-
 
 -- Helper to calculate Schlicks approximation of Fresnels equation
 schlick :: Double -> Double  -> Normal3 -> Normal3 -> Double

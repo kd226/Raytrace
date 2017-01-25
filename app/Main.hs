@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 module Main where
 
 import Raytracer
@@ -18,7 +17,6 @@ buildScene :: State Scene ()
 buildScene = do
   -- addLight (Spotlight (Vec3 0.0 3.0 3.0) lightColor)
   modify $ addLight (Vec3 0.0 1.2 1.7) 0.11 white
-
   -- addShape (Plane (mkNormal (Vec3 0.0 1.0 0.0)) (-0.0) (lightBulb white))
   modify $ addShape (Plane (mkNormal (Vec3 0.0 1.0 0.0)) (0.0) flatWhite)
   modify $ addShape (Plane (mkNormal (Vec3 0.0 (1.0) 0.0)) (1.7) flatWhite)
@@ -29,10 +27,10 @@ buildScene = do
 
   modify $ addShape (Sphere (Vec3 0.5 (0.3) 1.7) 0.3 glass)
   -- modify $ addShape (Sphere (Vec3 (-0.5) (1.2) 1.7) 0.2 glass)
-  modify $ addShape (Sphere (Vec3 (-0.7) (0.3) 2.2) 0.3 greenshinyred)
+  modify $ addShape (Sphere (Vec3 (-0.7) (0.3) 2.2) 0.3 greenShinyRed)
   modify $ addShape (Sphere (Vec3 (-0.9) (0.1) 1.8) 0.1 flatRed)
-  modify $ addShape (Sphere (Vec3 (-0.1) (0.2) 2.3) 0.2 metal)
-  -- addShape (Sphere (Vec3 0.2 (0.4) 0.6) 0.4 shinyred)
+  modify $ addShape (Sphere (Vec3 (-0.1) (0.2) 2.3) 0.2 mirror)
+  -- addShape (Sphere (Vec3 0.2 (0.4) 0.6) 0.4 shinyRed)
   modify $ setAmbientLight black
 
 buildView :: State View ()
@@ -52,15 +50,4 @@ buildWorld = do
 main :: IO ()
 main = do
   let world = execState buildWorld sampleWorld
-  {--world `seq` --}
-  -- let bitmap = runReader renderFrames world
-  -- savePPM "test.ppm" bitmap
-
   runReaderT (renderAllNotified "test") world
-
--- main :: IO ()
--- main = do
---   let ios = evalState (buildWorld >> sampleEvery 500 500) sampleWorld
---   let ii = foldl' (>>) (putStrLn "") ios
---   ii
---   putStrLn "Succes"

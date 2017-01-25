@@ -1,17 +1,15 @@
 {-|
-Module      :
+Module      : Types
 Description : Raytrace types
-Copyright   : (c) Konrad Dobroś
+Copyright   : (c) Konrad Dobroś, 2017
 License     : GPL-3
-Maintainer  : sample@email.com
+Maintainer  : dobros.konrad@gmail.com
 Stability   : experimental
 Portability : POSIX
 
 Module containing types used in Raytace library.
 -}
 
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Types where
 
 import Data.Vect.Double
@@ -36,35 +34,35 @@ prodMix = pointwise
 
 type Point3 = Vec3
 
--- | BRDF models with their specific descriptions
-data BRDF = Lambert { color::Color -- ^ Color of lambertian surface
-                    } -- ^ Lambertian reflectance BRDF
+-- | BRDF models with their corresponding descriptions (Bounce Reflect Diffuse Functions).
+data BRDF = Lambert { color::Color -- ^ Color of lambertian surface.
+                    } -- ^ Lambertian reflectance BRDF.
           | Reflection { inRI::Double -- ^ Index of refraction of material
-                                      -- inside the shape
+                                      -- inside the shape.
                        , outRI::Double -- ^ Index of refraction of material
-                                       -- outside the shape
-                       , color::Color  -- ^ Change of color of reflected rays
-                       } -- ^ Perfect reflection BRDF
+                                       -- outside the shape.
+                       , color::Color  -- ^ Change of color of reflected rays.
+                       } -- ^ Perfect reflection BRDF.
           | Refraction { inRI::Double -- ^ Index of refraction of material
-                                      -- inside the shape
+                                      -- inside the shape.
                        , outRI::Double -- ^ Index of refraction of material
-                                       -- outside the shape
-                       , color::Color -- ^ Change of color of refracted rays
-                       } -- ^ Perfect refraction BRDF
-          | Emmisive { color::Color -- ^ Color of emmited light
-                     } -- ^ Generic emmisive BRDF
+                                       -- outside the shape.
+                       , color::Color -- ^ Change of color of refracted rays.
+                       } -- ^ Perfect refraction BRDF.
+          | Emmisive { color::Color -- ^ Color of emmited light.
+                     } -- ^ Generic emmisive BRDF.
 
--- | Material of specific point
+-- | Material of specific point.
 data Material = Material{ brdfs::[(Double,BRDF)] -- ^ Pairs of and brdfs.
                          -- In order for material to be realistic sum of must be
                          -- lower or equal to 1.
                         }
 
--- | Ray in three dimensions
-data Ray = Ray { base::Point3 -- ^ Point from which the ray starts
-               , direction::Normal3 -- ^ Direction in which ray is pointing
+-- | Ray in three dimensions.
+data Ray = Ray { base::Point3 -- ^ Point from which the ray starts.
+               , direction::Normal3 -- ^ Direction in which ray is pointing.
                }
--- | All information about intersection
+-- | All information about intersection.
 data Intersection = Intersection { normalI::Normal3 -- ^ Normal of intersection.
                                  , point::Point3 -- ^ Point of intersection.
                                  , ray::Ray -- ^ Ray which intersected.
@@ -72,24 +70,27 @@ data Intersection = Intersection { normalI::Normal3 -- ^ Normal of intersection.
                                    -- intersection.
                                  }
 
--- | Scene description
-data Scene = Scene { shapes::[Shape]
-                   , lights::[Light]
-                   , ambientLight::Color
-                   , backgroundColor::Color
+-- | Scenes description.
+data Scene = Scene { shapes::[Shape] -- ^ Shapes in a scene.
+                   , lights::[Light] -- ^ Lights in a scene.
+                   , ambientLight::Color -- ^ Ambient light of a scene
+                   -- (light that doesn't depend on visibility from any light source).
+                   , backgroundColor::Color -- Background light of a scene.
                    }
 
--- | View description
-data View = View { camera::Point3
-                 , clipPlane::Double
-                 , forward::Normal3
-                 , up::Normal3
-                 , fov::Double
+-- | View description.
+data View = View { camera::Point3 -- ^ Cameras position in the scene
+                 , clipPlane::Double -- ^ Clipping plane of a camera (how close the objects can be seen)
+                 , forward::Normal3 -- ^ Normal vector of where the camera is facing
+                 , up::Normal3 -- ^ Normal vector of where the camera has "up" direction in
+                 , fov::Double -- ^ Angle between point most to the left and most to the right, as seen by the camera
                  }
 
 -- | Description of whole Raytrace world with all settings needed to render
 -- the scene.
-data World = World !Scene !View !Int !Int !Int !Int
+data World = World !Scene !View !Int !Int !Int !Int -- ^ Scene to be rendered,
+-- view from which to render, depth of ray bounces, number of frames to be averaged
+-- width and height of output render
 scene :: World -> Scene
 scene (World s _ _ _ _ _ ) = s
 
@@ -109,13 +110,15 @@ height :: World -> Int
 height (World _ _ _ _ _ h) = h
 
 -- | Shapes in the scene
-data Shape = Sphere { center::Point3
-                    , radius::Double
-                    , materialFunc::Point3 -> Material
+data Shape = Sphere { center::Point3 -- ^ Center of a sphere.
+                    , radius::Double -- ^ Radius of a sphere.
+                    , materialFunc::Point3 -> Material -- ^ Function that
+                    -- describes material of point on a sphere.
                     } -- ^ Spherical shape.
-          | Plane { normal::Normal3
-                  , distance::Double
-                  , materialFunc::Point3 -> Material
+          | Plane { normal::Normal3 -- ^ Normal direction of a sphere.
+                  , distance::Double -- ^ Distance from an origin - (0,0,0) along normal.
+                  , materialFunc::Point3 -> Material -- ^ Function that
+                  -- describes material of a point on a plane.
                   } -- ^ Shape as two sided infinte plane.
 
 -- | Light point used as general check if point is lit

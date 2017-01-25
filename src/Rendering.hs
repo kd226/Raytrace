@@ -1,8 +1,21 @@
+{-|
+Module      : Rendering
+Description : Rendering functions
+Copyright   : (c) Konrad Dobroś, 2017
+License     : GPL-3
+Maintainer  : dobros.konrad@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+This module contains functions used to render result image and save it.
+-}
+
+
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Rendering (Bitmap, savePPM, renderAll,renderAllNotified) where
+module Rendering (Bitmap, savePPM, renderAll, renderAllNotified) where
 
 import Raytracer
 import SceneBuilder
@@ -22,15 +35,15 @@ import Control.DeepSeq
 import Control.Monad.Par
 
 type RGBA = Vec4
-
+-- | Generic Bitmap type with fast acces to it's size
 data Bitmap a = Bitmap { pixels::[a] -- ^ List of pixels of type a
                        , widthB::Int -- ^ Width of bitmap
                        , heightB::Int -- ^ Height of bitmap
-                       } -- deriving (NFData)
+                       }
 
 -- Instances of NFData in order to implement parallelism
 instance (NFData a) => NFData (Bitmap a) where
-  rnf (Bitmap pix w h) = (rnf pix) `seq` rnf w `seq` rnf h
+  rnf (Bitmap pix w h) = rnf pix `seq` rnf w `seq` rnf h
 
 instance NFData Vec3 where
   rnf (Vec3 x y z) = rnf x `seq` rnf y `seq` rnf z
@@ -48,10 +61,10 @@ createRays w h = do
   let foh = fovw / fromIntegral w * fromIntegral h
   let grid = [ Vec3 (fromIntegral x) (fromIntegral y) (clipPlane v)
                | y <- [1..h], x <- [1..w]]
-  let scaleX = -2*(clipPlane v) * sin (fovw/2.0) / fromIntegral w
-  let scaleY = -2*(clipPlane v) * sin (foh/2.0) / fromIntegral h
+  let scaleX = -2* clipPlane v  * sin (fovw/2.0) / fromIntegral w
+  let scaleY = -2* clipPlane v * sin (foh/2.0) / fromIntegral h
   let scaledGrid = map (pointwise (Vec3 scaleX scaleY 1.0).(&+) (Vec3 (fromIntegral w/(-2.0)) (fromIntegral h/(-2.0)) 0.0)) grid
-  let left = (forward v) `crossprod` (up v)
+  let left = forward v `crossprod` up v
   let projection = Mat3 (fromNormal left) (fromNormal (up v)) (fromNormal (forward v))
   let projectedGrid = map (lmul projection) scaledGrid
   return (map (Ray (camera v).mkNormal) projectedGrid)
@@ -75,27 +88,28 @@ renderFrame chunked !size stdg = do
     colors <- mapM get evcolors
     return $ concat colors
 
+-- | Renders all frames specified by "World" and returns them as average in color "Bitmap"
 renderFrames :: Reader World (Bitmap Color)
 renderFrames = do
   w <- asks width
   h <- asks height
   world <- ask
-  let chunks = 32
+  let chunks = 32 -- Experimentally chosen number of divisions for fastest parallel performance
   rays <- createRays w h
-  let chunked = chunksOf (w*h `div` chunks)  rays
+  let chunked = chunksOf (w*h `div` chunks) rays
   frames <- asks samples
   let stdg = mkStdGen 0
   let generators = evalRand (replicateM frames getSplit) stdg
   let calcPixs = chunked `seq` map (renderFrame chunked chunks) generators
-  let results = runReader (sequence calcPixs) world -- `using` evalList rpar
-  let pixsf = (map (&* (1.0/fromIntegral frames))
-             .foldl' addFrame (replicate (w*h) black) $(results {--`using` evalList rdeepseq --}))
+  let results = runReader (sequence calcPixs) world
+  let pixsf = map (&* (1.0/fromIntegral frames))
+             .foldl' addFrame (replicate (w*h) black) $ results
   return $ Bitmap pixsf w h
 
 addFrame :: [Color] -> [Color] -> [Color]
 addFrame soFar add = soFar `deepseq` zipWith (&+) soFar add
 
--- | Renders all frames specified by World and writes line to IO each time a
+-- | Renders all frames specified by "World" and writes line to IO each time a
 -- frame is rendered.
 renderFramesNotified :: ReaderT World IO (Bitmap Color)
 renderFramesNotified = do
@@ -111,12 +125,11 @@ renderFramesNotified = do
   let calcPixs = chunked `seq` map (renderFrame chunked chunks) generators
   let results = runReader (sequence calcPixs) world
   pixsf <- liftIO $ fmap (map (&* (1.0/fromIntegral frames)).snd).foldM addFrameN (0,replicate (w*h) black) $(results)
-  -- (map (&* (1.0/fromIntegral frames)).
   return $ Bitmap pixsf w h
 
 addFrameN :: (Int, [Color]) -> [Color] -> IO (Int, [Color])
 addFrameN (!number,soFar) add = do
-  soFar `deepseq` putStrLn $ "Frame number " ++ show (number+1) ++ " stated."
+  soFar `deepseq` putStrLn $ "Frame number " ++ show (number+1) ++ " started."
   return  (number+1,zipWith (&+) soFar add)
 
 -- | Render all frames specified in World and save them to file, notifing each
@@ -129,7 +142,7 @@ renderAllNotified name = do
   bitmap `deepseq` liftIO $ savePPM name bitmap
   liftIO $ putStrLn "Succes"
 
--- | Renders all frames specified in World and save them to file
+-- | Renders all frames specified in "World" and save them to a file
 renderAll :: String  -- ^ Name of the file to save to
           -> ReaderT World IO () -- ^ Returned IO in ReaderT monad
 renderAll name = do
@@ -146,8 +159,8 @@ toWords b = Bitmap words8 (heightB b) (widthB b)
     calculateD d = truncate (d * fromIntegral mb)
     mb = maxBound :: Word8
 
--- | Save color bitmap to pmm file.
-savePPM :: FilePath -- ^ Path to file
+-- | Save color "Bitmap" to .pmm file.
+savePPM :: FilePath -- ^ Path to a file
         -> Bitmap Color -- ^ Bitmap to save
         -> IO () -- ^ Returned IO monad
 savePPM f bm = writeFile fpmm stringifyPPM
