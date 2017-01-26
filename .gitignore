@@ -26,6 +26,6 @@ cabal.project.local
 # End of https://www.gitignore.io/api/haskell
 
 # test renders and converted profiling data
-*.ppm
+test.ppm
 *.ps 
 

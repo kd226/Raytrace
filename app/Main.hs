@@ -42,10 +42,10 @@ buildWorld :: State World ()
 buildWorld = do
   let s = execState buildScene emptyScene
   let v = execState buildView sampleView
-  let rd = 10
+  let rd = 16
 
   -- s <- get
-  put (World s v rd 5 500 500)
+  put (World s v rd 1 2732 1536)
 
 main :: IO ()
 main = do
