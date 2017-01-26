@@ -247,11 +247,23 @@ positionCamera :: Vec3 -> View -> View
 -- | Sample <a>World</a> with <a>emptyScene</a> and <a>sampleView</a> with
 --   ray depth of 10, 1 frame to render and resolution of 500x500
 sampleWorld :: World
+
+-- | Save <a>Scene</a> to a <a>World</a>
 setScene :: Scene -> World -> World
+
+-- | Save <a>View</a> to a <a>World</a>
 setView :: View -> World -> World
+
+-- | Set depth of rays in a <a>World</a>
 setRayDepth :: Int -> World -> World
+
+-- | Set number of samples to average when rendering this <a>World</a>
 setSamples :: Int -> World -> World
+
+-- | Set width of rendered image
 setWidth :: Int -> World -> World
+
+-- | Set height of rendered image
 setHeight :: Int -> World -> World
 
 
