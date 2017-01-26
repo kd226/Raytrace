@@ -18,7 +18,6 @@ import Data.Vect.Double
 import Control.Monad.State.Strict
 import Control.Monad.Reader
 import Control.Monad.Random
-import Debug.Trace
 import Data.List (foldl1')
 import Types
 import Predefined

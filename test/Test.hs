@@ -8,7 +8,6 @@ import Types
 import Predefined
 import SceneBuilder
 import Data.Vect.Double
--- import Data.Vect.Double.Base
 
 assertWithinEpsilon :: (HasCallStack, Num a, Show a) => String -> (a -> Double) -> a -> a -> Double -> Assertion
 assertWithinEpsilon premise f a b eps = if f (abs (a-b)) < eps
