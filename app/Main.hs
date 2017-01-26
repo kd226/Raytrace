@@ -45,7 +45,7 @@ buildWorld = do
   let rd = 16
 
   -- s <- get
-  put (World s v rd 1 2732 1536)
+  put (World s v rd 1 500 500)
 
 main :: IO ()
 main = do

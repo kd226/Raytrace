@@ -3,7 +3,7 @@ Rendering engine written in Haskell using pathtracing algoritm
 
 ## Build instruction
 ``` bash
-  stack clean build assembly:single
+  stack build
 ```
 
 ## Run instruction
@@ -12,4 +12,4 @@ Rendering engine written in Haskell using pathtracing algoritm
 ```
 
 ## Example images
-![Image of 1 sample](2732px-16dip-1s.ppm)
+![Image of 1 sample](500px-16dip-1s.ppm)
