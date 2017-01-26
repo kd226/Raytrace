@@ -76,20 +76,25 @@ positionCamera p v = View p (clipPlane v) (forward v) (up v) (fov v)
 sampleWorld :: World
 sampleWorld = World emptyScene sampleView 10 1 500 500
 
-setScene :: Scene -> World -> World
+-- | Save 'Scene' to a 'World'
+setScene :: Scene -- ^ 'Scene' to save
+         -> World -> World
 setScene s (World sc vi rd samp width height) = World s vi rd samp width height
-
-setView :: View -> World -> World
+-- | Save 'View' to a 'World'
+setView :: View  -- ^ New 'View' to save
+        -> World -> World
 setView v (World sc vi rd samp width height) = World sc v rd samp width height
-
-setRayDepth :: Int -> World -> World
+-- | Set depth of rays in a 'World'
+setRayDepth :: Int -- ^ New depth of rays
+            -> World -> World
 setRayDepth r (World sc vi rd samp width height) = World sc vi r samp width height
-
-setSamples :: Int -> World -> World
+-- | Set number of samples to average when rendering this 'World'
+setSamples :: Int -- ^ Number of samples
+           -> World -> World
 setSamples s (World sc vi rd samp width height) = World sc vi rd s width height
-
+-- | Set width of rendered image
 setWidth :: Int -> World -> World
 setWidth w (World sc vi rd samp width height) = World sc vi rd samp w height
-
+-- | Set height of rendered image
 setHeight :: Int -> World -> World
 setHeight h (World sc vi rd samp width height) = World sc vi rd samp width h
