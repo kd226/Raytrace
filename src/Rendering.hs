@@ -15,7 +15,8 @@ This module contains functions used to render result image and save it.
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Rendering (Bitmap, savePPM, renderAll, renderAllNotified) where
+module Rendering (Bitmap, pixels, width, height, savePPM, renderAll_, renderAll
+                 , renderAllNotified) where
 
 import Raytracer
 import SceneBuilder
@@ -150,6 +151,14 @@ renderAll name = do
   let bitmap = runReader renderFrames world
   bitmap `deepseq` liftIO $ savePPM name bitmap -- force full bitmap evaluation before saving it
   -- could be propably written as savePPM name $!! bitmap
+
+-- | Render all frames specified in 'World' and return renderd bitmap of colors
+-- !! Will propabli become default rendering function in the future
+renderAll_ :: Reader World (Bitmap Color)
+renderAll_ = do
+  world <- ask
+  bitmap <- renderFrames
+  bitmap `deepseq` return bitmap
 
 toWords :: Bitmap Color -> Bitmap Word8
 toWords b = Bitmap words8 (heightB b) (widthB b)

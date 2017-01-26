@@ -33,19 +33,20 @@ instance Num Vec3 where
   fromInteger a = Vec3 (fromInteger a) (fromInteger a) (fromInteger a)
   signum (Vec3 a b c) = Vec3 (signum a) (signum b) (signum c)
 
-testRootsP = TestCase (assertWithinEpsilon "for roots of 1*x^2-2.2*x+0.85 = 0" sum
-                      [0.5, 1.7] (sort(roots 1 (-2.2) 0.85)) 0.001)
+testRootsP = TestCase (assertWithinEpsilon "for roots of 1*x^2-2.2*x+0.85 = 0"
+                      sum [0.5, 1.7] (sort(roots 1 (-2.2) 0.85)) 0.001)
 
-testRootsZ = TestCase (assertEqual "for roots of 1*x^2+2*x+1 = 0" [-1.0, -1.0] (roots 1 2 1))
+testRootsZ = TestCase (assertEqual "for roots of 1*x^2+2*x+1 = 0" [-1.0, -1.0]
+                        (roots 1 2 1))
 
-testRootsN = TestCase (assertEqual "for roots of -1*x^2+1*x+1 = 0" [] (roots (1) 1 1))
+testRootsN = TestCase (assertEqual "for roots of -1*x^2+1*x+1 = 0" []
+                        (roots 1 1 1))
 
 rootTests = [TestLabel "Delta negative" testRootsN
   , TestLabel "Delta is zero" testRootsZ, TestLabel "Delta positive" testRootsP]
 
-testAddShape = TestCase (assertEqual "after adding shape" 1
-         $ length $ shapes  $ addShape (Sphere (Vec3 0 0 0) 0.1 flatRed) emptyScene)
-
+testAddShape = TestCase (assertEqual "after adding shape" [Sphere (Vec3 0 0 0) 0.1 flatRed]
+         (shapes $ addShape (Sphere (Vec3 0 0 0) 0.1 flatRed) emptyScene))
 
 testYawCamera = TestCase (assertWithinEpsilon "angle of rotated camera" norm
         (normalize (Vec3 0.0 0.5 (-0.5))) (fromNormal $ up (yawCamera (pi/4) sampleView )) 0.001)

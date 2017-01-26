@@ -111,6 +111,7 @@ overallLighting importance depth hit =
 -- | Send a ray and return its color.
 raytrace :: Double -- ^ Importance of ray
          -- (when importance is sufficently low raytracing stops and returns black).
+         -- Should be started at 1.0.
          -> Int -- ^ Depth to trace, that is raytracing stops when depth reaches 0.
          -> Ray -- ^ Ray to send.
          -> ReaderT World (Rand StdGen) Color -- ^ Color of this ray.
@@ -161,7 +162,6 @@ calculateBRDF (Lambert c) importance depth intersection = do
   l <- asks $lights.scene
   w <- ask
   let lits = runReader (filterM (pointIsLit.point$intersection) l) w
-  -- let dirToLight x = mkNormal (x &- point intersection)
   let lightDirs = map (\x -> mkNormal (x &- point intersection)) lits
   colors <- mapM (raytrace importance 1.Ray (point intersection)) lightDirs
   let coefficients = map (diffuseCoeff (normalI intersection)) lightDirs
@@ -173,11 +173,9 @@ calculateBRDF (Lambert c) importance depth intersection = do
   let x = phi * cos (2*pi*r_2)
   let y = cos (asin phi)
   let z = phi * sin (2*pi*r_2)
-  -- let randomDir = mkNormal (Vec3 x y z)
   let normalHit = if (normalI intersection &. (direction.ray$intersection)) > 0
       then flipNormal.normalI$intersection else normalI intersection
   let randomDir = mkNormal (Vec3 x y z)
-  -- let outRayDir = (normalI intersection)
   let outRayDir = rotateWorld randomDir normalHit -- (normalI$intersection)
   let outRay = Ray (point intersection) outRayDir
   let coeff = diffuseCoeff outRayDir normalHit -- (normalI intersection)

@@ -10,6 +10,8 @@ Portability : POSIX
 Module containing types used in Raytace library.
 -}
 
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Types where
 
 import Data.Vect.Double
@@ -18,6 +20,11 @@ import Control.Monad.Random
 --------------------------------------------------------------------------------
 -- Basic types
 type Color = Vec3
+
+deriving instance Eq Vec3
+instance Eq Normal3 where
+  (==) a b = fromNormal a == fromNormal b
+
 
 clamp :: Color -> Color
 clamp (Vec3 r g b) = Vec3 (clampDouble r) (clampDouble g) (clampDouble b)
@@ -51,24 +58,25 @@ data BRDF = Lambert { color::Color -- ^ Color of lambertian surface.
                        } -- ^ Perfect refraction BRDF.
           | Emmisive { color::Color -- ^ Color of emmited light.
                      } -- ^ Generic emmisive BRDF.
+                     deriving (Eq)
 
 -- | Material of specific point.
 data Material = Material{ brdfs::[(Double,BRDF)] -- ^ Pairs of and brdfs.
                          -- In order for material to be realistic sum of must be
                          -- lower or equal to 1.
-                        }
+                        } deriving (Eq)
 
 -- | Ray in three dimensions.
 data Ray = Ray { base::Point3 -- ^ Point from which the ray starts.
                , direction::Normal3 -- ^ Direction in which ray is pointing.
-               }
+               } deriving (Eq)
 -- | All information about intersection.
 data Intersection = Intersection { normalI::Normal3 -- ^ Normal of intersection.
                                  , point::Point3 -- ^ Point of intersection.
                                  , ray::Ray -- ^ Ray which intersected.
                                  , material::Material -- ^ Material at point of
                                    -- intersection.
-                                 }
+                                 } deriving (Eq)
 
 -- | Scenes description.
 data Scene = Scene { shapes::[Shape] -- ^ Shapes in a scene.
@@ -76,7 +84,7 @@ data Scene = Scene { shapes::[Shape] -- ^ Shapes in a scene.
                    , ambientLight::Color -- ^ Ambient light of a scene
                    -- (light that doesn't depend on visibility from any light source).
                    , backgroundColor::Color -- Background light of a scene.
-                   }
+                   } deriving (Show)
 
 -- | View description.
 data View = View { camera::Point3 -- ^ Cameras position in the scene
@@ -84,7 +92,7 @@ data View = View { camera::Point3 -- ^ Cameras position in the scene
                  , forward::Normal3 -- ^ Normal vector of where the camera is facing
                  , up::Normal3 -- ^ Normal vector of where the camera has "up" direction in
                  , fov::Double -- ^ Angle between point most to the left and most to the right, as seen by the camera
-                 }
+                 } deriving (Eq)
 
 -- | Description of whole Raytrace world with all settings needed to render
 -- the scene.
@@ -120,6 +128,15 @@ data Shape = Sphere { center::Point3 -- ^ Center of a sphere.
                   , materialFunc::Point3 -> Material -- ^ Function that
                   -- describes material of a point on a plane.
                   } -- ^ Shape as two sided infinte plane.
+                  deriving (Show)
+instance Eq Shape where
+  (==) (Sphere c r _) (Sphere c2 r2 _) = c == c2 && r == r2
+  (==) (Plane n d _ ) (Plane n2 d2 _ ) = n == n2 && d == d2
+  (==) _ _ = False
+
+instance Show (Point3 -> Material) where
+  show _ = "Material function"
+
 
 -- | Light point used as general check if point is lit
 type Light = Point3

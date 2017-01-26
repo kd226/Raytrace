@@ -1,6 +1,6 @@
 {-|
 Module      : SceneBuilder
-Description : Building "World" to render
+Description : Building 'World' to render
 Copyright   : (c) Konrad Dobroś, 2017
 License     : GPL-3
 Maintainer  : dobros.konrad@gmail.com
@@ -9,7 +9,7 @@ Portability : POSIX
 
 This module contains functions used to build and manipulate everything that
 is to be rendered. They should be used in state monad as with modify function,
-however in case of diffrent need they are defined as pure modifiers.
+however in case of different need they are defined as pure modifiers.
 -}
 
 module SceneBuilder where
@@ -75,3 +75,21 @@ positionCamera p v = View p (clipPlane v) (forward v) (up v) (fov v)
 -- 1 frame to render and resolution of 500x500
 sampleWorld :: World
 sampleWorld = World emptyScene sampleView 10 1 500 500
+
+setScene :: Scene -> World -> World
+setScene s (World sc vi rd samp width height) = World s vi rd samp width height
+
+setView :: View -> World -> World
+setView v (World sc vi rd samp width height) = World sc v rd samp width height
+
+setRayDepth :: Int -> World -> World
+setRayDepth r (World sc vi rd samp width height) = World sc vi r samp width height
+
+setSamples :: Int -> World -> World
+setSamples s (World sc vi rd samp width height) = World sc vi rd s width height
+
+setWidth :: Int -> World -> World
+setWidth w (World sc vi rd samp width height) = World sc vi rd samp w height
+
+setHeight :: Int -> World -> World
+setHeight h (World sc vi rd samp width height) = World sc vi rd samp width h
