@@ -30,6 +30,7 @@ buildScene = do
   modify $ addShape (Sphere (Vec3 (-0.7) (0.3) 2.2) 0.3 greenShinyRed)
   modify $ addShape (Sphere (Vec3 (-0.9) (0.1) 1.8) 0.1 flatRed)
   modify $ addShape (Sphere (Vec3 (-0.1) (0.2) 2.3) 0.2 mirror)
+  -- modify $ addShape (Sphere (Vec3 0.0 1.2 1.3) 0.3 shinyRed)
   -- addShape (Sphere (Vec3 0.2 (0.4) 0.6) 0.4 shinyRed)
   modify $ setAmbientLight black
 
@@ -45,7 +46,7 @@ buildWorld = do
   let rd = 16
 
   -- s <- get
-  put (World s v rd 1 500 500)
+  put (World s v rd 1 1366 768)
 
 main :: IO ()
 main = do

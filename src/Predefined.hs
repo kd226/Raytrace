@@ -42,8 +42,8 @@ greenShinyRed _ = Material [(0.1, Lambert green)
 -- (conservation of energy is calculated from Fresnels law).
 glass _ = Material [(1.0, Refraction 1.5 1.0 white)
                    ,(1.0, Reflection 1.5 1.0 white)]
-flatBlack _ = Material [(0.8, Lambert black)]
-flatWhite _ = Material [(1.0, Lambert white)]
+flatBlack _ = Material [(0.9, Lambert black)]
+flatWhite _ = Material [(0.9, Lambert white)]
 flatBlue _ = Material [(0.9, Lambert blue)]
 flatGreen _ = Material [(0.9, Lambert green)]
 
