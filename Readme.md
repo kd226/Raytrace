@@ -4,7 +4,7 @@ when their importance (maximal percent of influence on output image) goes below 
 Currently only Lambertian BRDF supports Monte Carlo integration.
 
 ## Scene
-Right now Raytrace lacks any sophisticated scene manipulation from a file, so it just renders predefined scene in 1366x768 resolution. Hovewer, changing resolution or any other setting, as well as modifing scene is intuitive and easily doable by just changing appropriate lines in Main.hs.
+Right now Raytrace lacks any sophisticated scene manipulation from a file, so it just renders predefined scene in 500x500 resolution and with 4 samples. Hovewer, changing resolution or any other setting, as well as modifing scene is intuitive and easily doable by just changing appropriate lines in Main.hs.
 
 ## Output
 Rendered images are saved in .ppm format file which is easily
